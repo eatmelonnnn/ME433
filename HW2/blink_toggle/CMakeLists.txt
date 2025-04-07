@@ -48,6 +48,10 @@ pico_enable_stdio_usb(blink_toggle 0)
 target_link_libraries(blink_toggle
         pico_stdlib)
 
+ # enable usb output, disable uart output
+pico_enable_stdio_usb(blink_toggle 1)
+pico_enable_stdio_uart(blink_toggle 0)
+
 # Add the standard include files to the build
 target_include_directories(blink_toggle PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
