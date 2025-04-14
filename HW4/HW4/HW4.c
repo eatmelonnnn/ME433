@@ -14,15 +14,15 @@
 #define MAX_DAC_VAL 1023
 
 static inline void cs_select(uint cs_pin) {
-    asm volatile("nop \n nop \n nop");
+    asm volatile("nop \n nop \n nop"); // FIXME
     gpio_put(cs_pin, 0);
-    asm volatile("nop \n nop \n nop");
+    asm volatile("nop \n nop \n nop"); // FIXME
 }
 
 static inline void cs_deselect(uint cs_pin) {
-    asm volatile("nop \n nop \n nop");
+    asm volatile("nop \n nop \n nop"); // FIXME
     gpio_put(cs_pin, 1);
-    asm volatile("nop \n nop \n nop");
+    asm volatile("nop \n nop \n nop"); // FIXME
 }
 
 void writeDac(int channel, float voltage){
@@ -41,7 +41,7 @@ void writeDac(int channel, float voltage){
     data[1] = command & 0xFF;
 
     cs_select(PIN_CS);
-    spi_write_blocking(SPI_PORT, data, 2);
+    spi_write_blocking(SPI_PORT, data, 2); // where data is a uint8_t array with length len
     cs_deselect(PIN_CS);
 }
 
