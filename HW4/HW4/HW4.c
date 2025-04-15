@@ -58,7 +58,7 @@ int main() {
     gpio_set_dir(PIN_CS, GPIO_OUT);
     gpio_put(PIN_CS, 1);
 
-    const float dt = 1.0f / 500.0f; // 500Hz update
+    const float dt = 1.0f / 500.0f; // 500Hz update rate
     float time = 0.0f;
 
     while (true) {
@@ -68,10 +68,19 @@ int main() {
 
         // 1Hz triangle wave on channel B
         float tri_t = fmodf(time, 1.0f);
-        float triangle_v = tri_t < 0.5f ? (2.0f * tri_t * VREF) : (2.0f * (1.0f - tri_t) * VREF);
+        float triangle_v;
+
+        if (tri_t < 0.5f) {
+            // Rising edge of the triangle wave
+            triangle_v = 2.0f * tri_t * VREF;
+        } else {
+            // Falling edge of the triangle wave
+            triangle_v = 2.0f * (1.0f - tri_t) * VREF;
+        }
         writeDac(1, triangle_v);
 
-        sleep_us(2000); // 500Hz
+
+        sleep_us(2000);
         time += dt;
     }
 
