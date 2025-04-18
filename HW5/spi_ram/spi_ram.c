@@ -1,100 +1,126 @@
 #include <stdio.h>
+#include <math.h>
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
 
-// SPI Defines
-// We are going to use SPI 0, and allocate it to the following GPIO pins
-// Pins can be changed, see the GPIO function select table in the datasheet for information on GPIO assignments
+// SPI setup
 #define SPI_PORT spi0
 #define PIN_MISO 16
-#define PIN_CS   17
 #define PIN_SCK  18
 #define PIN_MOSI 19
+#define PIN_CS_RAM 21
+#define PIN_CS_DAC 20
+
+#define VREF 3.3
+#define PI 3.14159265
 
 union FloatInt {
     float f;
     uint32_t i;
-    };
+};
 
-
-void init_ram(){
-    uint8_t buff[2];
-    buff[0] = 0b00000101; // I want to change the status register
-    buff[1] = 0b01000000; // to sequential mode
-
-    // Set the CS pin low to select the device
-    // cs low
-    spi_write_blocking(spi_default, buff, 2);
-    // cd high
-    //
+// ---- CS control helpers ----
+void cs_select(uint cs_pin) {
+    gpio_put(cs_pin, 0);
+}
+void cs_deselect(uint cs_pin) {
+    gpio_put(cs_pin, 1);
 }
 
-void ram_write(uint16_t address,float v){
-    uint8_t buff[7];
-    buff[0] = 0b00000010; // I want to write to the memory (instrction)
-    buff[1] = (uint8_t)(address >> 8); // high byte
-    buff[2] = (uint8_t)(address & 0xFF); // low byte
+// ---- DAC write ----
+// Write a value between 0 and 3.3V to DAC channel A
+void write_dac(float voltage) {
+    uint16_t value = (uint16_t)(voltage / VREF * 4095); // 12-bit resolution
+    uint16_t command = 0b0011000000000000 | (value & 0x0FFF); // Channel A, buffered, gain=1x, active
 
+    uint8_t data[2];
+    data[0] = (command >> 8) & 0xFF;
+    data[1] = command & 0xFF;
+
+    cs_select(PIN_CS_DAC);
+    spi_write_blocking(SPI_PORT, data, 2);
+    cs_deselect(PIN_CS_DAC);
+}
+
+// ---- RAM setup ----
+void spi_ram_init() {
+    uint8_t buff[2] = {0b00000001, 0b01000000}; // Write status register, sequential mode
+    cs_select(PIN_CS_RAM);
+    spi_write_blocking(SPI_PORT, buff, 2);
+    cs_deselect(PIN_CS_RAM);
+}
+
+// ---- RAM write ----
+void ram_write(uint16_t address, float v) {
     union FloatInt num;
     num.f = v;
-
-    buff[3] = num.i >> 24; // data
-    buff[4] ...
-    buff[5] ...
-    buff[6] ...
-
-    // Set the CS pin low to select the device
-    // cs low
-    spi_write_blocking(spi_default, buff, 7);
-    // cd high
+    uint8_t buff[7] = {
+        0b00000010,               // write command
+        (address >> 8) & 0xFF,    // high byte
+        address & 0xFF,           // low byte
+        (num.i >> 24) & 0xFF,
+        (num.i >> 16) & 0xFF,
+        (num.i >> 8) & 0xFF,
+        num.i & 0xFF
+    };
+    cs_select(PIN_CS_RAM);
+    spi_write_blocking(SPI_PORT, buff, 7);
+    cs_deselect(PIN_CS_RAM);
 }
 
-float ram_read(uint16_t){
-    uint8_t out_buff[7], in_buff[7];
+// ---- RAM read ----
+float ram_read(uint16_t address) {
+    uint8_t cmd[3] = {
+        0b00000011,
+        (address >> 8) & 0xFF,
+        address & 0xFF
+    };
+    uint8_t data[4];
 
-    out_buff[0] = instruction
-    out_buff[1] = address highbyte
-    out_buff[2] = address lowbyte
-    // Set the CS in low to select the device
-    // cs low
-    spi_write_read_blocking(spi_default, out_buff, in_buff,7);
-    // cd high
+    cs_select(PIN_CS_RAM);
+    spi_write_blocking(SPI_PORT, cmd, 3);
+    spi_read_blocking(SPI_PORT, 0x00, data, 4);
+    cs_deselect(PIN_CS_RAM);
+
     union FloatInt num;
-    num.i = 0;
-
-
-    v = in_buff[3] << 24 | (in_buff[4] << 16) 
-    return num.f
+    num.i = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
+    return num.f;
 }
 
-int main()
-{
+int main() {
     stdio_init_all();
 
-    // SPI initialisation. This example will use SPI at 1MHz.
-    spi_init(SPI_PORT, 1000*1000);
+    // ---- SPI setup ----
+    spi_init(SPI_PORT, 1000 * 1000);
     gpio_set_function(PIN_MISO, GPIO_FUNC_SPI);
-    gpio_set_function(PIN_CS,   GPIO_FUNC_SIO);
     gpio_set_function(PIN_SCK,  GPIO_FUNC_SPI);
     gpio_set_function(PIN_MOSI, GPIO_FUNC_SPI);
     
-    // Chip select is active-low, so we'll initialise it to a driven-high state
-    gpio_set_dir(PIN_CS, GPIO_OUT);
-    gpio_put(PIN_CS, 1);
-    // For more examples of SPI use see https://github.com/raspberrypi/pico-examples/tree/master/spi
+    gpio_set_function(PIN_CS_RAM, GPIO_FUNC_SIO);
+    gpio_set_function(PIN_CS_DAC, GPIO_FUNC_SIO);
+    gpio_set_dir(PIN_CS_RAM, GPIO_OUT);
+    gpio_set_dir(PIN_CS_DAC, GPIO_OUT);
+    gpio_put(PIN_CS_RAM, 1);
+    gpio_put(PIN_CS_DAC, 1);
 
-    init_ram();
+    // ---- Initialize RAM chip ----
+    spi_ram_init();
 
-
-    for (i = 0 to 1000);
-        calulate v = sin(t);
-        ram_write(address, v)
-
-    while (true) {
-        //read or one address
-        float v = ram_read(address)
-
-        printf("Hello, world!\n");
-        sleep_ms(1000);
+    // ---- Fill RAM with sine wave values ----
+    for (int i = 0; i < 1000; i++) {
+        float theta = 2 * PI * i / 1000.0;
+        float v = (sinf(theta) + 1.0f) * (VREF / 2.0f); // scale 0 to 3.3V
+        ram_write(i * 4, v); // 4 bytes per float
     }
+
+    // ---- Loop: read from RAM and output to DAC ----
+    int index = 0;
+    while (true) {
+        float v = ram_read(index * 4);
+        write_dac(v);
+        sleep_ms(1); // 1ms = 1000Hz / 1000 samples = 1Hz full sine
+        index = (index + 1) % 1000;
+    }
+
+    return 0;
 }
