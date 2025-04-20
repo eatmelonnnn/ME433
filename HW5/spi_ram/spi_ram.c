@@ -3,14 +3,13 @@
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
 
-// SPI setup
+// SPI Defines
 #define SPI_PORT spi0
 #define PIN_MISO 16
 #define PIN_SCK  18
 #define PIN_MOSI 19
 #define PIN_CS_RAM 21
 #define PIN_CS_DAC 20
-
 #define VREF 3.3
 #define PI 3.14159265
 
@@ -19,7 +18,6 @@ union FloatInt {
     uint32_t i;
 };
 
-// ---- CS control helpers ----
 void cs_select(uint cs_pin) {
     gpio_put(cs_pin, 0);
 }
@@ -27,8 +25,6 @@ void cs_deselect(uint cs_pin) {
     gpio_put(cs_pin, 1);
 }
 
-// ---- DAC write ----
-// Write a value between 0 and 3.3V to DAC channel A
 void write_dac(float voltage) {
     uint16_t value = (uint16_t)(voltage / VREF * 4095); // 12-bit resolution
     uint16_t command = 0b0011000000000000 | (value & 0x0FFF); // Channel A, buffered, gain=1x, active
@@ -42,7 +38,6 @@ void write_dac(float voltage) {
     cs_deselect(PIN_CS_DAC);
 }
 
-// ---- RAM setup ----
 void spi_ram_init() {
     uint8_t buff[2] = {0b00000001, 0b01000000}; // Write status register, sequential mode
     cs_select(PIN_CS_RAM);
@@ -50,7 +45,6 @@ void spi_ram_init() {
     cs_deselect(PIN_CS_RAM);
 }
 
-// ---- RAM write ----
 void ram_write(uint16_t address, float v) {
     union FloatInt num;
     num.f = v;
@@ -68,7 +62,6 @@ void ram_write(uint16_t address, float v) {
     cs_deselect(PIN_CS_RAM);
 }
 
-// ---- RAM read ----
 float ram_read(uint16_t address) {
     uint8_t cmd[3] = {
         0b00000011,
@@ -90,7 +83,7 @@ float ram_read(uint16_t address) {
 int main() {
     stdio_init_all();
 
-    // ---- SPI setup ----
+    // SPI initialization    
     spi_init(SPI_PORT, 1000 * 1000);
     gpio_set_function(PIN_MISO, GPIO_FUNC_SPI);
     gpio_set_function(PIN_SCK,  GPIO_FUNC_SPI);
@@ -103,17 +96,16 @@ int main() {
     gpio_put(PIN_CS_RAM, 1);
     gpio_put(PIN_CS_DAC, 1);
 
-    // ---- Initialize RAM chip ----
     spi_ram_init();
 
-    // ---- Fill RAM with sine wave values ----
+    // Sign Wave
     for (int i = 0; i < 1000; i++) {
         float theta = 2 * PI * i / 1000.0;
         float v = (sinf(theta) + 1.0f) * (VREF / 2.0f); // scale 0 to 3.3V
         ram_write(i * 4, v); // 4 bytes per float
     }
 
-    // ---- Loop: read from RAM and output to DAC ----
+    // Read and write to DAC
     int index = 0;
     while (true) {
         float v = ram_read(index * 4);
