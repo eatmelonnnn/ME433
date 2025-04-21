@@ -6,14 +6,11 @@
 #define I2C_PORT i2c0
 #define I2C_SDA 0
 #define I2C_SCL 1
-#define MCP23008_ADDR 0x20  // Assuming A0, A1, A2 are all tied to GND
-
-// MCP23008 register addresses
+#define MCP23008_ADDR 0x20  //xs A0, A1, A2 are all tied to GND
 #define IODIR 0x00
 #define OLAT  0x0A
 #define GPIO  0x09
 
-// Pins
 #define LED_PIN 25  // Onboard LED
 
 void write_register(uint8_t addr, uint8_t reg, uint8_t val) {
@@ -33,32 +30,29 @@ int main() {
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
 
-    i2c_init(I2C_PORT, 400 * 1000);  // 400 kHz
+    i2c_init(I2C_PORT, 400 * 1000); 
     gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
     gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
     gpio_pull_up(I2C_SDA);
     gpio_pull_up(I2C_SCL);
 
-    sleep_ms(100);  // Wait for power to stabilize
+    sleep_ms(100); 
 
-    // Set GP0 as input (1), GP7 as output (0), others as inputs (1)
+    // Set GP0 as input, GP7 as output, others as inputs
     write_register(MCP23008_ADDR, IODIR, 0b01111111);
 
     while (true) {
-        // Heartbeat blink
         gpio_put(LED_PIN, 1);
         sleep_ms(100);
         gpio_put(LED_PIN, 0);
 
-        // Read GPIO to check button state
         uint8_t gpio_val = read_register(MCP23008_ADDR, GPIO);
-        bool button_pressed = (gpio_val & 0b00000001) == 0;  // GP0 low if button pressed
+        bool button_pressed = (gpio_val & 0b00000001) == 0;
 
-        // Turn LED on GP7 on or off based on button
         if (button_pressed) {
-            write_register(MCP23008_ADDR, OLAT, 0b10000000);  // Set GP7 high
+            write_register(MCP23008_ADDR, OLAT, 0b10000000); 
         } else {
-            write_register(MCP23008_ADDR, OLAT, 0b00000000);  // Set GP7 low
+            write_register(MCP23008_ADDR, OLAT, 0b00000000); 
         }
 
         sleep_ms(400);
