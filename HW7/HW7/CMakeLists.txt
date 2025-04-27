@@ -46,7 +46,10 @@ pico_enable_stdio_usb(HW7 1)
 
 # Add the standard library to the build
 target_link_libraries(HW7
-        pico_stdlib)
+        pico_stdlib
+        hardware_i2c
+        hardware_adc)
+
 
 # Add the standard include files to the build
 target_include_directories(HW7 PRIVATE
