@@ -14,14 +14,12 @@
 #define WS2812_PIN 16
 #define SERVO_PIN 15
 
-// ==== COLOR STRUCT ====
 typedef struct {
     unsigned char r;
     unsigned char g;
     unsigned char b;
 } wsColor;
 
-// ==== HELPER FUNCTIONS ====
 
 // Convert HSB (Hue, Saturation, Brightness) to RGB
 wsColor HSBtoRGB(float hue, float sat, float brightness) {
