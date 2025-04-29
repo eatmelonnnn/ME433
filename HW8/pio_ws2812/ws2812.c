@@ -151,20 +151,23 @@ const struct {
 void servo_init() {
     gpio_set_function(SERVO_PIN, GPIO_FUNC_PWM);
     uint slice_num = pwm_gpio_to_slice_num(SERVO_PIN);
-    pwm_set_wrap(slice_num, 24999); // for 50Hz
-    pwm_set_clkdiv(slice_num, 60.f);
+    float div = 50;
+    pwm_set_clkdiv(slice_num, div);
+    uint16_t wrap = 59999;
+    pwm_set_wrap(slice_num, wrap); // for 50Hz
     pwm_set_enabled(slice_num, true);
 }
 
 // Set servo angle between 0 and 180
 void set_servo_angle(float angle) {
     uint slice_num = pwm_gpio_to_slice_num(SERVO_PIN);
-    float min_duty = 0.025;
-    float max_duty = 0.125;
-    float duty = min_duty + (angle / 180.0) * (max_duty - min_duty);
-    uint16_t level = duty * 24999;
-    pwm_set_gpio_level(SERVO_PIN, level);
+    float min_pulse_ms = 0.5; 
+    float max_pulse_ms = 2.5; 
+    float pulse_ms = min_pulse_ms + (angle / 180.0) * (max_pulse_ms - min_pulse_ms);
+    uint16_t duty = (pulse_ms / 20.0) * 59999; // 20ms
+    pwm_set_gpio_level(SERVO_PIN, duty);
 }
+
 
 int main() {
     //set_sys_clock_48();
@@ -194,7 +197,7 @@ int main() {
         for (int step = 0; step < total_steps; step++) {
             float t = (float)step / (float)total_steps;
 
-            // Servo movement
+            // Servo angle
             float angle;
             if (t < 0.5) {
                 angle = t * 2.0 * 180.0; // ramp up
@@ -206,7 +209,7 @@ int main() {
             // LED rainbow
             for (int i = 0; i < NUM_PIXELS; i++) {
                 float hue = fmod((360.0 * t * 2) + (i * (360.0/NUM_PIXELS)), 360.0);
-                wsColor c = HSBtoRGB(hue, 1.0, 0.2); // Brightness = 0.2 (dim)
+                wsColor c = HSBtoRGB(hue, 1.0, 0.2);
                 put_pixel(pio, sm, urgb_u32(c.r, c.g, c.b));
             }
 
