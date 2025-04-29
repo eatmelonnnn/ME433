@@ -55,32 +55,24 @@ int main() {
 
         t = to_us_since_boot(get_absolute_time());
 
-        // Read ADC value
         uint16_t result = adc_read();
         adc_voltage = result * conversion_factor;
-
-        // Clear the display
         ssd1306_clear();
-
-        // Print ADC voltage
         sprintf(message, "ADC0 = %.2f V", adc_voltage);
         drawMessage(0, 0, message);
-
-        // Update display
         ssd1306_update();
 
         t2 = to_us_since_boot(get_absolute_time());
-        tdiff = t2 - t; // microseconds
+        tdiff = t2 - t;
 
-        // Calculate FPS
+        // FPS
         float fps = 1000000.0f / tdiff;
         sprintf(fps_message, "FPS = %.2f", fps);
         
-        // Draw FPS
         drawMessage(0, 24, fps_message);
         ssd1306_update();
 
-        sleep_ms(500); // Heartbeat at 1Hz (on for 0.5s, off for 0.5s)
+        sleep_ms(500);
     }
 }
 
