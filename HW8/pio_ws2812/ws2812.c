@@ -190,7 +190,7 @@ int main() {
     servo_init();
 
     const int total_time_ms = 5000; // 5 seconds
-    const int step_time_ms = 20;    // smooth updates
+    const int step_time_ms = 20; 
     const int total_steps = total_time_ms / step_time_ms;
 
     while (true) {
