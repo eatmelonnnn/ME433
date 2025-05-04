@@ -97,7 +97,7 @@ int main() {
 
     spi_ram_init();
 
-    // Sin Wave
+    // Sine Wave
     for (int i = 0; i < 1000; i++) {
         float theta = 2 * M_PI * i / 1000.0;
         float v = (sinf(theta) + 1.0f) * (VREF / 2.0f); // scale 0 to 3.3V
