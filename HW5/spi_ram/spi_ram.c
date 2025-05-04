@@ -11,7 +11,6 @@
 #define PIN_CS_RAM 21
 #define PIN_CS_DAC 20
 #define VREF 3.3
-#define PI 3.14159265
 
 union FloatInt {
     float f;
@@ -98,9 +97,9 @@ int main() {
 
     spi_ram_init();
 
-    // Sign Wave
+    // Sin Wave
     for (int i = 0; i < 1000; i++) {
-        float theta = 2 * PI * i / 1000.0;
+        float theta = 2 * M_PI * i / 1000.0;
         float v = (sinf(theta) + 1.0f) * (VREF / 2.0f); // scale 0 to 3.3V
         ram_write(i * 4, v); // 4 bytes per float
     }
