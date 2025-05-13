@@ -32,14 +32,15 @@
 
 #include "usb_descriptors.h"
 #include "hardware/gpio.h"
+#include <math.h>  
 
 // Gpio pins
 #define BTN_UP     2
 #define BTN_DOWN   3
 #define BTN_LEFT   4
 #define BTN_RIGHT  5
-#define BTN_MODE   6
-#define LED_MODE   25
+#define BTN_MODE   16
+#define LED_MODE   15
 
 //--------------------------------------------------------------------+
 // MACRO CONSTANT TYPEDEF PROTYPES
@@ -57,7 +58,7 @@ enum  {
 };
 
 static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
-static bool mode = false; // false for button control, true for circle
+static bool mode_circle = false; // false for button control, true for circle, start with button control
 static uint32_t press_time[4] = {0};
 
 void led_blinking_task(void);
@@ -165,10 +166,61 @@ static void send_hid_report(uint8_t report_id, uint32_t btn)
 
     case REPORT_ID_MOUSE:
     {
-      int8_t const delta = 5;
-
       // no button, right + down, no scroll, no pan
-      tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, delta, delta, 0, 0);
+      // tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, delta, delta, 0, 0);
+
+      static bool last_mode_btn = true;
+      static float angle = 0.0;
+
+      bool current_mode_btn = gpio_get(BTN_MODE);
+      if (!current_mode_btn && last_mode_btn) {
+        mode_circle = !mode_circle;
+        gpio_put(LED_MODE, mode_circle);
+      }
+      last_mode_btn = current_mode_btn;
+
+      int8_t dx = 0;
+      int8_t dy = 0;
+
+      if (!mode_circle) {
+        // Manual button mode
+        uint32_t now = board_millis();
+        bool pressed[4] = {
+          !gpio_get(BTN_RIGHT), // index 0
+          !gpio_get(BTN_LEFT),  // index 1
+          !gpio_get(BTN_UP),    // index 2
+          !gpio_get(BTN_DOWN)   // index 3
+        };
+
+        for (int i = 0; i < 4; i++) {
+          if (pressed[i]) {
+            if (press_time[i] == 0) press_time[i] = now;
+          } else {
+            press_time[i] = 0;
+          }
+        }
+
+        int speeds[4] = {0};
+        for (int i = 0; i < 4; i++) {
+          if (press_time[i] > 0) {
+            uint32_t held = now - press_time[i];
+            if (held < 300) speeds[i] = 1;
+            else if (held < 600) speeds[i] = 3;
+            else speeds[i] = 5;
+          }
+        }
+
+        dx = speeds[0] - speeds[1]; // right - left
+        dy = speeds[3] - speeds[2]; // down - up
+      } else {
+        // Circle mode
+        angle += 0.1f;
+        if (angle > 2 * 3.14159f) angle -= 2 * 3.14159f;
+        dx = (int8_t)(8.0f * cosf(angle));
+        dy = (int8_t)(8.0f * sinf(angle));
+      }
+
+      tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, dx, dy, 0, 0);
     }
     break;
 
@@ -247,7 +299,7 @@ void hid_task(void)
   }else
   {
     // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
-    send_hid_report(REPORT_ID_KEYBOARD, btn);
+    send_hid_report(REPORT_ID_MOUSE, btn);
   }
 }
 
