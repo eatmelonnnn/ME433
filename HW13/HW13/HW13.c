@@ -37,7 +37,7 @@
 void imu_init();
 void imu_read(int16_t *ax, int16_t *ay, int16_t *az,
                   int16_t *gx, int16_t *gy, int16_t *gz);
-void draw_vector(int16_t ax, int16_t ay);
+void drawVector(int16_t ax, int16_t ay);
 void drawLine(int x0, int y0, int x1, int y1, char color);
 
 int main() {
@@ -60,7 +60,7 @@ int main() {
 
     while (true) {
         imu_read(&ax, &ay, &az, &gx, &gy, &gz);
-        draw_vector(ax, ay);
+        drawVector(ax, ay);
         sleep_ms(20);
     }
 }
@@ -100,7 +100,7 @@ void imu_read(int16_t *ax, int16_t *ay, int16_t *az,
     *gz = (int16_t)(data[12] << 8 | data[13]);
 }
 
-void draw_vector(int16_t ax, int16_t ay) {
+void drawVector(int16_t ax, int16_t ay) {
     float fx = ax * 0.000061;
     float fy = ay * 0.000061;
 
