@@ -15,8 +15,8 @@
 #define CAMERA_CENTER 40
 
 // === Control Parameters ===
-#define BASE_DUTY_PCT 65.0f  // % duty when going straight
-#define MAX_DUTY_PCT 90.0f
+#define BASE_DUTY_PCT 75.0f  // % duty when going straight
+#define MAX_DUTY_PCT 100.0f
 #define GAIN 1.0f            // increase this for sharper turns
 #define DEAD_BAND 4
 
@@ -29,13 +29,14 @@ void setup_pwm(uint gpio) {
 }
 
 // Drive motor in forward/reverse using two pins
+// REVERSED: PWM forward is actually on the *reverse* pin
 void set_motor_pwm_percent(float duty_pct, uint pin_fwd, uint pin_rev) {
     if (duty_pct > 0.0f) {
-        pwm_set_gpio_level(pin_fwd, (uint16_t)(PWM_WRAP * duty_pct / 100.0f));
-        pwm_set_gpio_level(pin_rev, 0);
+        pwm_set_gpio_level(pin_fwd, 0);  // previously forward
+        pwm_set_gpio_level(pin_rev, (uint16_t)(PWM_WRAP * duty_pct / 100.0f));
     } else if (duty_pct < 0.0f) {
-        pwm_set_gpio_level(pin_fwd, 0);
-        pwm_set_gpio_level(pin_rev, (uint16_t)(PWM_WRAP * -duty_pct / 100.0f));
+        pwm_set_gpio_level(pin_fwd, (uint16_t)(PWM_WRAP * -duty_pct / 100.0f));
+        pwm_set_gpio_level(pin_rev, 0);
     } else {
         pwm_set_gpio_level(pin_fwd, 0);
         pwm_set_gpio_level(pin_rev, 0);
@@ -77,7 +78,7 @@ int main() {
 
         // Send PWM to motors
         set_motor_pwm_percent(left_duty, AIN1, AIN2);   // Left motor
-        set_motor_pwm_percent(right_duty, BIN1, BIN2);  // Right motor
+        set_motor_pwm_percent(right_duty, BIN2, BIN1);  // Right motor
 
         sleep_ms(10);  // run loop ~100Hz
     }
