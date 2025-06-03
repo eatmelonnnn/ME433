@@ -17,7 +17,7 @@
 // === Control Parameters ===
 #define BASE_DUTY_PCT 75.0f  // % duty when going straight
 #define MAX_DUTY_PCT 100.0f
-#define GAIN 1.0f            // increase this for sharper turns
+#define GAIN 2.0f            // increase this for sharper turns
 #define DEAD_BAND 4
 
 void setup_pwm(uint gpio) {

@@ -7,7 +7,7 @@
 import matplotlib.pyplot as plt 
 
 import serial
-ser = serial.Serial('/dev/tty.usbmodem14101')
+ser = serial.Serial('/dev/tty.usbmodem14401')
 print('Opening port: ')
 print(ser.name)
 
@@ -31,7 +31,7 @@ while not has_quit:
         for t in range(4800):
             dat_str = ser.read_until(b'\n'); 
             i,r,g,b = list(map(int,dat_str.split())) 
-            row = i//80c
+            row = i//80
             col = i%80
             reds[row][col] = r
             greens[row][col] = g
