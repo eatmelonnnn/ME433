@@ -9,7 +9,7 @@
 #define BIN1 20
 #define BIN2 21
 
-#define PWM_WRAP 6250  // 20kHz PWM
+#define PWM_WRAP 6250  //  20kHz PWM
 
 // === Line Sensor Constants ===
 #define CAMERA_CENTER 40

@@ -7,7 +7,7 @@
 import matplotlib.pyplot as plt 
 
 import serial
-ser = serial.Serial('/dev/tty.usbmodem14401')
+ser = serial.Serial('/dev/tty.usbmodem14101')
 print('Opening port: ')
 print(ser.name)
 
