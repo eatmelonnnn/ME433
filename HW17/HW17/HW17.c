@@ -58,7 +58,7 @@ int main() {
         while (getSaveImage()) {}
         convertImage();
 
-        int center = findLine(IMAGESIZEY / 2);  // white line center
+        int center = findLine(50);  // white line center
         int error = center - CAMERA_CENTER;
 
         float left_duty = BASE_DUTY_PCT;

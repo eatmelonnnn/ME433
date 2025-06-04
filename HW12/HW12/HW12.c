@@ -21,8 +21,8 @@ int main()
         setSaveImage(1);
         while(getSaveImage()==1){}
         convertImage();
-        int com = findLine(IMAGESIZEY/2); // calculate the position of the center of the ine
-        setPixel(IMAGESIZEY/2,com,0,255,0); // draw the center so you can see it in python
+        int com = findLine(50); // calculate the position of the center of the ine
+        setPixel(50,com,0,255,0); // draw the center so you can see it in python
         printImage();
         // printf("%d\r\n",com); // comment this when testing with python
     }

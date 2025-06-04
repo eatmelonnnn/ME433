@@ -322,7 +322,7 @@ int findLine(int row){
     // threshold the row
     for(i=0;i<IMAGESIZEX;i++){
         int mass = picture.r[r+i] + picture.g[r+i] + picture.b[r+i];
-        if (mass < avgBright){
+        if (mass < 1.08*avgBright){
             // not bright enough, set pixel to black
             picture.r[r+i] = 0;
             picture.g[r+i] = 0;
